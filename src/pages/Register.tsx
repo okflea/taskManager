@@ -153,7 +153,7 @@ const Register = () => {
             >{isLoading ? <LoaderIcon /> : "Sign up"}</Button>
           </form>
         </Form>
-        <p className="text-sm font-thin">Already have an account? <a href="/login" className="text-blue-500 font-normal">Login</a></p>
+        <p className="text-sm font-thin">Already have an account? <p onClick={() => { navigate("/login") }} className="text-blue-500 font-normal hover:cursor-pointer">Login</p></p>
       </div>
     </div>
   </>;

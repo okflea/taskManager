@@ -108,7 +108,9 @@ const Login = () => {
             >{isLoading ? <LoaderIcon /> : "Login"}</Button>
           </form>
         </Form>
-        <p className="text-sm py-2 font-thin">Don't have an account? <a href="/register" className="text-blue-500 font-normal">Signup</a></p>
+        <p
+          className="text-sm py-2 font-thin">
+          Don't have an account? <p onClick={() => { navigate("/register") }} className="text-blue-500 font-normal hover:cursor-pointer" >Signup</p></p>
       </div>
     </div>
   </>;
