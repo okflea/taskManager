@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import React from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
-import { CalendarIcon, DragHandleDots1Icon, DragHandleDots2Icon, DrawingPinFilledIcon, DrawingPinIcon, OpenInNewWindowIcon, ReaderIcon } from '@radix-ui/react-icons';
+import { CalendarIcon, DragHandleDots2Icon, DrawingPinFilledIcon, DrawingPinIcon, OpenInNewWindowIcon, ReaderIcon } from '@radix-ui/react-icons';
 import { Button } from '../ui/button';
 import { CardContent, CardFooter } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -52,7 +52,7 @@ const Items = ({ task }: Props) => {
         transform: CSS.Translate.toString(transform),
       }}
       className={clsx(
-        'hover:border-sky-600 px-2 py-4 bg-gradient-to-br from-blue-300 to-blue-200 shadow-md rounded-xl w-full border-2 border-transparent hover:border-gray-200  shadow-md',
+        'hover:border-sky-600 px-2 py-4 bg-gradient-to-br from-blue-300 to-blue-200  rounded-xl w-full border-2 border-transparent  shadow-md',
         isDragging && 'opacity-20 cursor-grabbing border-4 border-rose-300',
       )}
     >

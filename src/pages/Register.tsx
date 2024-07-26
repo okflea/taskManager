@@ -6,9 +6,9 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { toast } from "sonner";
 import LoaderIcon from "@/assets/Loading";
 
@@ -53,8 +53,6 @@ const Register = () => {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     setIsLoading(true)
-    console.log(values);
-
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register`, values)
       console.log(response.status)

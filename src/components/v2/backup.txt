@@ -1,0 +1,397 @@
+import { closestCorners, DndContext, DragEndEvent, DragMoveEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, UniqueIdentifier, useSensor, useSensors } from '@dnd-kit/core'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import React, { useEffect, useState } from 'react'
+import Container from './Container';
+import Items from './Items';
+import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { Description } from '@radix-ui/react-dialog';
+import { toast } from 'sonner';
+
+type DNDType = {
+  id: UniqueIdentifier;
+  title: string;
+  items: {
+    id: UniqueIdentifier;
+    title: string;
+    description?: string;
+    createdAt: Date
+  }[]
+}
+function Board() {
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
+
+  const getTasks = async () => {
+    const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/tasks`)
+    return res.data
+  }
+  const { data, isFetched } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: getTasks
+  })
+  const [containers, setContainers] = useState<DNDType[]>([
+    {
+      id: `container-9c37ceaa-1253-4e30-9f6a-bc6db15ca696`,
+      title: "To Do ",
+      items: [
+      ]
+    },
+    {
+      id: `container-92e6c529-f459-4505-9c2b-789b3d7f46c6`,
+      title: "In Progress",
+      items: [
+      ]
+    },
+    {
+      id: `container-5b7b6a5f-9d9e-4d7d-9d3b-0a0b0c0d0e0f`,
+      title: "Done",
+      items: [
+
+      ]
+    }
+  ])
+  useEffect(() => {
+    if (isFetched && data) {
+      const newContainers: DNDType[] = [
+        { id: 'TODO', title: 'To Do', items: [] },
+        { id: 'INPROGRESS', title: 'In Progress', items: [] },
+        { id: 'DONE', title: 'Done', items: [] },
+      ];
+
+      data.forEach((task: any) => {
+        const containerIndex = newContainers.findIndex((c) => c.id === task.column);
+        if (containerIndex !== -1) {
+          newContainers[containerIndex].items.push({
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            createdAt: new Date(task.createdAt)
+          });
+        }
+      });
+
+      setContainers(newContainers);
+    }
+  }, [isFetched, data]);
+  //helper
+  // Find the value of the items
+  function findValueOfItems(id: UniqueIdentifier | undefined, type: string) {
+    if (type === 'container') {
+      return containers.find((item) => item.id === id);
+    }
+    if (type === 'item') {
+      return containers.find((container) =>
+        container.items.find((item) => item.id === id),
+      );
+    }
+  }
+
+  const findItemTitle = (id: UniqueIdentifier | undefined) => {
+    const container = findValueOfItems(id, 'item');
+    if (!container) return '';
+    const item = container.items.find((item) => item.id === id);
+    if (!item) return '';
+    return item.title;
+  };
+  const findItemDescription = (id: UniqueIdentifier | undefined) => {
+    const container = findValueOfItems(id, 'item');
+    if (!container) return '';
+    const item = container.items.find((item) => item.id === id);
+    if (!item) return '';
+    return item.description;
+  }
+  const findItemCreatedAt = (id: UniqueIdentifier | undefined) => {
+    const container = findValueOfItems(id, 'item');
+    if (!container) return undefined
+    const item = container.items.find((item) => item.id === id);
+    if (!item) return undefined
+    return item.createdAt;
+  }
+
+  const findContainerTitle = (id: UniqueIdentifier | undefined) => {
+    const container = findValueOfItems(id, 'container');
+    if (!container) return '';
+    return container.title;
+  };
+
+  const findContainerItems = (id: UniqueIdentifier | undefined) => {
+    const container = findValueOfItems(id, 'container');
+    if (!container) return [];
+    return container.items;
+  };
+
+  //Dnd handlers
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event;
+    const { id } = active;
+    setActiveId(id);
+  }
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    const { active, over } = event;
+
+    // Handle Items Sorting
+    if (
+      active.id.toString().includes('item') &&
+      over?.id.toString().includes('item') &&
+      active &&
+      over &&
+      active.id !== over.id
+    ) {
+      // Find the active container and over container
+      const activeContainer = findValueOfItems(active.id, 'item');
+      const overContainer = findValueOfItems(over.id, 'item');
+
+      // If the active or over container is not found, return
+      if (!activeContainer || !overContainer) return;
+
+      // Find the index of the active and over container
+      const activeContainerIndex = containers.findIndex(
+        (container) => container.id === activeContainer.id,
+      );
+      const overContainerIndex = containers.findIndex(
+        (container) => container.id === overContainer.id,
+      );
+
+      // Find the index of the active and over item
+      const activeitemIndex = activeContainer.items.findIndex(
+        (item) => item.id === active.id,
+      );
+      const overitemIndex = overContainer.items.findIndex(
+        (item) => item.id === over.id,
+      );
+      // In the same container
+      if (activeContainerIndex === overContainerIndex) {
+        let newItems = [...containers];
+        newItems[activeContainerIndex].items = arrayMove(
+          newItems[activeContainerIndex].items,
+          activeitemIndex,
+          overitemIndex,
+        );
+
+        setContainers(newItems);
+      } else {
+        // In different containers
+        let newItems = [...containers];
+        const [removeditem] = newItems[activeContainerIndex].items.splice(
+          activeitemIndex,
+          1,
+        );
+        newItems[overContainerIndex].items.splice(
+          overitemIndex,
+          0,
+          removeditem,
+        );
+        setContainers(newItems);
+      }
+    }
+
+    // Handling Item Drop Into a Container
+    if (
+      active.id.toString().includes('item') &&
+      over?.id.toString().includes('container') &&
+      active &&
+      over &&
+      active.id !== over.id
+    ) {
+      // Find the active and over container
+      const activeContainer = findValueOfItems(active.id, 'item');
+      const overContainer = findValueOfItems(over.id, 'container');
+
+      // If the active or over container is not found, return
+      if (!activeContainer || !overContainer) return;
+
+      // Find the index of the active and over container
+      const activeContainerIndex = containers.findIndex(
+        (container) => container.id === activeContainer.id,
+      );
+      const overContainerIndex = containers.findIndex(
+        (container) => container.id === overContainer.id,
+      );
+
+      // Find the index of the active and over item
+      const activeitemIndex = activeContainer.items.findIndex(
+        (item) => item.id === active.id,
+      );
+
+      // Remove the active item from the active container and add it to the over container
+      let newItems = [...containers];
+      const [removeditem] = newItems[activeContainerIndex].items.splice(
+        activeitemIndex,
+        1,
+      );
+      newItems[overContainerIndex].items.push(removeditem);
+      setContainers(newItems);
+    }
+  };
+
+  // This is the function that handles the sorting of the containers and items when the user is done dragging.
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    // Handling Container Sorting
+    if (
+      active.id.toString().includes('container') &&
+      over?.id.toString().includes('container') &&
+      active &&
+      over &&
+      active.id !== over.id
+    ) {
+      const activeContainerIndex = containers.findIndex(
+        (container) => container.id === active.id,
+      );
+      const overContainerIndex = containers.findIndex(
+        (container) => container.id === over.id,
+      );
+      let newItems = [...containers];
+      newItems = arrayMove(newItems, activeContainerIndex, overContainerIndex);
+      setContainers(newItems);
+    }
+
+    // Handling item Sorting and Moving
+    if (
+      active.id.toString().includes('item') &&
+      (over?.id.toString().includes('item') || over?.id.toString().includes('container'))
+    ) {
+      const activeContainer = findValueOfItems(active.id, 'item');
+      const overContainer = over?.id.toString().includes('container')
+        ? findValueOfItems(over.id, 'container')
+        : findValueOfItems(over.id, 'item');
+
+      if (!activeContainer || !overContainer) return;
+
+      const activeContainerIndex = containers.findIndex(
+        (container) => container.id === activeContainer.id,
+      );
+      const overContainerIndex = containers.findIndex(
+        (container) => container.id === overContainer.id,
+      );
+
+      let newItems = [...containers];
+
+      if (activeContainerIndex === overContainerIndex) {
+        // Sorting within the same container
+        const activeItemIndex = activeContainer.items.findIndex(
+          (item) => item.id === active.id,
+        );
+        const overItemIndex = overContainer.items.findIndex(
+          (item) => item.id === over.id,
+        );
+
+        newItems[activeContainerIndex].items = arrayMove(
+          newItems[activeContainerIndex].items,
+          activeItemIndex,
+          overItemIndex,
+        );
+      } else {
+        // Moving to a different container
+        const activeItemIndex = activeContainer.items.findIndex(
+          (item) => item.id === active.id,
+        );
+        const [removedItem] = newItems[activeContainerIndex].items.splice(
+          activeItemIndex,
+          1,
+        );
+
+        if (over?.id.toString().includes('container')) {
+          // Dropping directly into a container
+          newItems[overContainerIndex].items.push(removedItem);
+        } else {
+          // Dropping onto an item in a different container
+          const overItemIndex = overContainer.items.findIndex(
+            (item) => item.id === over.id,
+          );
+          newItems[overContainerIndex].items.splice(overItemIndex, 0, removedItem);
+        }
+
+        // Update the backend
+        updateTaskBackend(active.id as string, overContainer.id as string);
+      }
+
+      setContainers(newItems);
+    }
+
+    setActiveId(null);
+  }
+  const updateTaskBackend = async (taskId: string, containerId: string) => {
+    const updatedTask = data.find((task: any) => task.id === taskId);
+    if (updatedTask) {
+      updatedTask.containerId = containerId;
+    }
+    const res = await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/api/tasks/${taskId}`, {
+      title: updatedTask.title,
+      Description: updatedTask.description,
+      column: updatedTask.containerId
+    })
+    console.log(res.data)
+    if (res.status === 200) {
+      toast.success('Task moved successfully')
+    }
+  }
+
+  return (
+    <div className='p-4'>
+      <div className='grid grid-cols-3 gap-6'>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragMove={handleDragMove}
+          onDragEnd={handleDragEnd}
+
+        >
+          <SortableContext
+            items={containers.map((container) => container.id)}
+          >
+            {containers.map((container) => (
+              <Container
+                key={container.id}
+                title={container.title}
+                id={container.id}
+              // description={container.description}}
+              >
+                <SortableContext items={container.items.map((item) => item.id)}>
+                  <div className='flex items-start flex-col gap-y-4'></div>
+                  {container.items.map((item) => (
+                    <Items
+                      key={item.id}
+                      title={item.title}
+                      id={item.id}
+                      description={item.description}
+                      createdAt={item.createdAt.toISOString()} />
+                  ))}
+                </SortableContext>
+
+              </Container>
+            ))}
+          </SortableContext>
+          <DragOverlay adjustScale={false}>
+            {/* Drag Overlay For item Item */}
+            {activeId && activeId.toString().includes('item') && (
+              <Items
+                id={activeId}
+                title={findItemTitle(activeId)} description={findItemDescription(activeId)}
+                createdAt={findItemCreatedAt(activeId)?.toISOString() ?? ""} />
+            )}
+            {/* Drag Overlay For Container */}
+            {activeId && activeId.toString().includes('container') && (
+              <Container id={activeId} title={findContainerTitle(activeId)}>
+                {findContainerItems(activeId).map((i) => (
+                  <Items key={i.id} title={i.title} id={i.id} />
+                ))}
+              </Container>
+            )}
+          </DragOverlay>
+        </DndContext>
+      </div>
+    </div >
+  )
+}
+
+export default Board

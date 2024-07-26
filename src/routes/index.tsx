@@ -2,14 +2,12 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import Login from "../pages/Login";
 import Logout from "../pages/Logout";
-import { useAuth } from "@/provider/AuthProvider";
 import Board from "@/components/v2/Board";
 import ErrorPage from "@/ErrorPage";
 import TopBar from "@/components/TopBar";
 import Register from "@/pages/Register";
 
 const Routes = () => {
-  const { token } = useAuth();
 
   // Define public routes accessible to all users
   const routesForPublic = [

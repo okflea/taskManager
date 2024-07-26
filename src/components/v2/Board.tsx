@@ -1,6 +1,6 @@
-import { closestCorners, DndContext, DragEndEvent, DragMoveEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, UniqueIdentifier, useSensor, useSensors } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import React, { useEffect, useState } from 'react'
+import { closestCorners, DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, UniqueIdentifier, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { useState } from 'react';
 import Container from './Container';
 import Items from './Items';
 import axios from 'axios';
@@ -63,29 +63,6 @@ function Board() {
     { id: 'INPROGRESS', title: 'In Progress', items: [] },
     { id: 'DONE', title: 'Done', items: [] },
   ]);
-  // useEffect(() => {
-  //   if (isFetched && data) {
-  //     const newContainers: DNDType[] = [
-  //       { id: 'TODO', title: 'To Do', items: [] },
-  //       { id: 'INPROGRESS', title: 'In Progress', items: [] },
-  //       { id: 'DONE', title: 'Done', items: [] },
-  //     ];
-  //
-  //     data.forEach((task: any) => {
-  //       const containerIndex = newContainers.findIndex((c) => c.id === task.column);
-  //       if (containerIndex !== -1) {
-  //         newContainers[containerIndex].items.push({
-  //           id: task.id,
-  //           title: task.title,
-  //           description: task.description,
-  //           createdAt: task.createdAt,
-  //         });
-  //       }
-  //     });
-  //
-  //     setContainers(newContainers);
-  //   }
-  // }, [isFetched, data]);
   //helper
   // Find the value of the items
   function findValueOfItems(id: UniqueIdentifier | undefined, type: string) {
@@ -99,41 +76,6 @@ function Board() {
     }
   }
 
-  const findItemTitle = (id: UniqueIdentifier | undefined) => {
-    const container = findValueOfItems(id, 'item');
-    if (!container) return '';
-    const item = container.items.find((item) => item.id === id);
-    if (!item) return '';
-    return item.title;
-  };
-  const findItemDescription = (id: UniqueIdentifier | undefined) => {
-    const container = findValueOfItems(id, 'item');
-    if (!container) return '';
-    const item = container.items.find((item) => item.id === id);
-    if (!item) return '';
-    return item.description;
-  }
-  const findItemCreatedAt = (id: UniqueIdentifier | undefined) => {
-    const container = findValueOfItems(id, 'item');
-    if (!container) return undefined
-    const item = container.items.find((item) => item.id === id);
-    if (!item) return undefined
-    return item.createdAt;
-  }
-  const findItemOrder = (id: UniqueIdentifier | undefined) => {
-    const container = findValueOfItems(id, 'item');
-    if (!container) return 0;
-    const item = container.items.find((item) => item.id === id);
-    if (!item) return 0;
-    return item.order;
-  }
-  const findItemColumn = (id: UniqueIdentifier | undefined) => {
-    const container = findValueOfItems(id, 'item');
-    if (!container) return '';
-    const item = container.items.find((item) => item.id === id);
-    if (!item) return '';
-    return item.column;
-  }
 
   const findContainerTitle = (id: UniqueIdentifier | undefined) => {
     const container = findValueOfItems(id, 'container');
@@ -160,110 +102,10 @@ function Board() {
     setActiveId(id);
   }
 
-  // const handleDragMove = (event: DragMoveEvent) => {
-  //   const { active, over } = event;
-  //
-  //   // Handle Items Sorting
-  //   if (
-  //     active.id.toString().includes('item') &&
-  //     over?.id.toString().includes('item') &&
-  //     active &&
-  //     over &&
-  //     active.id !== over.id
-  //   ) {
-  //     // Find the active container and over container
-  //     const activeContainer = findValueOfItems(active.id, 'item');
-  //     const overContainer = findValueOfItems(over.id, 'item');
-  //
-  //     // If the active or over container is not found, return
-  //     if (!activeContainer || !overContainer) return;
-  //
-  //     // Find the index of the active and over container
-  //     const activeContainerIndex = containers.findIndex(
-  //       (container) => container.id === activeContainer.id,
-  //     );
-  //     const overContainerIndex = containers.findIndex(
-  //       (container) => container.id === overContainer.id,
-  //     );
-  //
-  //     // Find the index of the active and over item
-  //     const activeitemIndex = activeContainer.items.findIndex(
-  //       (item) => item.id === active.id,
-  //     );
-  //     const overitemIndex = overContainer.items.findIndex(
-  //       (item) => item.id === over.id,
-  //     );
-  //     // In the same container
-  //     if (activeContainerIndex === overContainerIndex) {
-  //       let newItems = [...containers];
-  //       newItems[activeContainerIndex].items = arrayMove(
-  //         newItems[activeContainerIndex].items,
-  //         activeitemIndex,
-  //         overitemIndex,
-  //       );
-  //
-  //       setContainers(newItems);
-  //     } else {
-  //       // In different containers
-  //       let newItems = [...containers];
-  //       const [removeditem] = newItems[activeContainerIndex].items.splice(
-  //         activeitemIndex,
-  //         1,
-  //       );
-  //       newItems[overContainerIndex].items.splice(
-  //         overitemIndex,
-  //         0,
-  //         removeditem,
-  //       );
-  //       setContainers(newItems);
-  //     }
-  //   }
-  //
-  //   // Handling Item Drop Into a Container
-  //   if (
-  //     active.id.toString().includes('item') &&
-  //     over?.id.toString().includes('container') &&
-  //     active &&
-  //     over &&
-  //     active.id !== over.id
-  //   ) {
-  //     // Find the active and over container
-  //     const activeContainer = findValueOfItems(active.id, 'item');
-  //     const overContainer = findValueOfItems(over.id, 'container');
-  //
-  //     // If the active or over container is not found, return
-  //     if (!activeContainer || !overContainer) return;
-  //
-  //     // Find the index of the active and over container
-  //     const activeContainerIndex = containers.findIndex(
-  //       (container) => container.id === activeContainer.id,
-  //     );
-  //     const overContainerIndex = containers.findIndex(
-  //       (container) => container.id === overContainer.id,
-  //     );
-  //
-  //     // Find the index of the active and over item
-  //     const activeitemIndex = activeContainer.items.findIndex(
-  //       (item) => item.id === active.id,
-  //     );
-  //
-  //     // Remove the active item from the active container and add it to the over container
-  //     let newItems = [...containers];
-  //     const [removeditem] = newItems[activeContainerIndex].items.splice(
-  //       activeitemIndex,
-  //       1,
-  //     );
-  //     newItems[overContainerIndex].items.push(removeditem);
-  //     setContainers(newItems);
-  //   }
-  // };
 
   // This is the function that handles the sorting of the containers and items when the user is done dragging.
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over, collisions } = event;
-    // console.log("active", active);
-    // console.log("over", over);
-    // console.log("event", event);
 
     if (!over) return;
     // if (active.id === over.id) return;
@@ -315,119 +157,6 @@ function Board() {
 
     setActiveId(null);
   }
-  // function handleDragEnd(event: DragEndEvent) {
-  //   const { active, over } = event;
-  //
-  //   // Handling Container Sorting
-  //   if (
-  //     active.id.toString().includes('container') &&
-  //     over?.id.toString().includes('container') &&
-  //     active &&
-  //     over &&
-  //     active.id !== over.id
-  //   ) {
-  //     // Find the index of the active and over container
-  //     const activeContainerIndex = containers.findIndex(
-  //       (container) => container.id === active.id,
-  //     );
-  //     const overContainerIndex = containers.findIndex(
-  //       (container) => container.id === over.id,
-  //     );
-  //     // Swap the active and over container
-  //     let newItems = [...containers];
-  //     newItems = arrayMove(newItems, activeContainerIndex, overContainerIndex);
-  //     setContainers(newItems);
-  //   }
-  //
-  //   // Handling item Sorting
-  //   if (
-  //     active.id.toString().includes('item') &&
-  //     over?.id.toString().includes('item') &&
-  //     active &&
-  //     over &&
-  //     active.id !== over.id
-  //   ) {
-  //     // Find the active and over container
-  //     const activeContainer = findValueOfItems(active.id, 'item');
-  //     const overContainer = findValueOfItems(over.id, 'item');
-  //
-  //     // If the active or over container is not found, return
-  //     if (!activeContainer || !overContainer) return;
-  //     // Find the index of the active and over container
-  //     const activeContainerIndex = containers.findIndex(
-  //       (container) => container.id === activeContainer.id,
-  //     );
-  //     const overContainerIndex = containers.findIndex(
-  //       (container) => container.id === overContainer.id,
-  //     );
-  //     // Find the index of the active and over item
-  //     const activeitemIndex = activeContainer.items.findIndex(
-  //       (item) => item.id === active.id,
-  //     );
-  //     const overitemIndex = overContainer.items.findIndex(
-  //       (item) => item.id === over.id,
-  //     );
-  //
-  //     // In the same container
-  //     if (activeContainerIndex === overContainerIndex) {
-  //       let newItems = [...containers];
-  //       newItems[activeContainerIndex].items = arrayMove(
-  //         newItems[activeContainerIndex].items,
-  //         activeitemIndex,
-  //         overitemIndex,
-  //       );
-  //       setContainers(newItems);
-  //     } else {
-  //       // In different containers
-  //       let newItems = [...containers];
-  //       const [removeditem] = newItems[activeContainerIndex].items.splice(
-  //         activeitemIndex,
-  //         1,
-  //       );
-  //       newItems[overContainerIndex].items.splice(
-  //         overitemIndex,
-  //         0,
-  //         removeditem,
-  //       );
-  //       setContainers(newItems);
-  //     }
-  //   }
-  //   // Handling item dropping into Container
-  //   if (
-  //     active.id.toString().includes('item') &&
-  //     over?.id.toString().includes('container') &&
-  //     active &&
-  //     over &&
-  //     active.id !== over.id
-  //   ) {
-  //     // Find the active and over container
-  //     const activeContainer = findValueOfItems(active.id, 'item');
-  //     const overContainer = findValueOfItems(over.id, 'container');
-  //
-  //     // If the active or over container is not found, return
-  //     if (!activeContainer || !overContainer) return;
-  //     // Find the index of the active and over container
-  //     const activeContainerIndex = containers.findIndex(
-  //       (container) => container.id === activeContainer.id,
-  //     );
-  //     const overContainerIndex = containers.findIndex(
-  //       (container) => container.id === overContainer.id,
-  //     );
-  //     // Find the index of the active and over item
-  //     const activeitemIndex = activeContainer.items.findIndex(
-  //       (item) => item.id === active.id,
-  //     );
-  //
-  //     let newItems = [...containers];
-  //     const [removeditem] = newItems[activeContainerIndex].items.splice(
-  //       activeitemIndex,
-  //       1,
-  //     );
-  //     newItems[overContainerIndex].items.push(removeditem);
-  //     setContainers(newItems);
-  //   }
-  //   setActiveId(null);
-  // }
   const activeTask = (id: string | UniqueIdentifier) => {
     return data?.find((task) => task.id === id);
   }
@@ -440,7 +169,6 @@ function Board() {
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
-          // onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}
 
         >
@@ -452,7 +180,6 @@ function Board() {
                 key={container.id}
                 title={container.title}
                 id={container.id}
-              // description={container.description}}
               >
                 <SortableContext items={container.items.map((item) => item.id)}>
                   <div className='flex items-start flex-col gap-y-4'></div>

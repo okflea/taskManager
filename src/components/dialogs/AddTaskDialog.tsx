@@ -1,15 +1,10 @@
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
+  Dialog, DialogContent,
+  DialogDescription, DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog"
-import { Pencil2Icon, PlusCircledIcon } from "@radix-ui/react-icons"
-import { Task } from "@/lib/types"
+import { PlusCircledIcon } from "@radix-ui/react-icons"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
